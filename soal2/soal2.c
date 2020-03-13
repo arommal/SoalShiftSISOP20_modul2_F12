@@ -60,39 +60,42 @@ int main(char *argv){
         if(n2 == 0){
             int i = 0;
             char dl[100], file[25];
-            for(;i<20;i++){
-                t = time(NULL);
-                tm = localtime(&t);
-                strftime(file, 25, "%Y-%m-%d_%X", tm);
-                sprintf(dl, "https://picsum.photos/%ld", ((t%1000)+100));
+            for(;i<2;i++){
+                time_t t2;
+                time(&t2);
+                struct tm *tm2 = localtime(&t2);
+                strftime(file, 25, "%Y-%m-%d_%X", tm2);
+                sprintf(dl, "https://picsum.photos/%ld", ((t2%1000)+100));
 
                 n3 = fork();
 
                 if(n3 == 0){
-                    char *arg2[] = {"wget", "-P", dirfolder, dl, NULL};
-                    execv("/bin/wget", arg2);
-                    exit(EXIT_SUCCESS);
+                    char *arg2[] = {"wget", "-O", file, dl, NULL};
+                    chdir(folder);
+                    execl("/usr/bin/wget", "wget", "-O", file, dl, NULL);
                 }
                 sleep(5);
             }
             while(wait(&status) > 0);
 
-            chdir("..");
-            char zipname[100];
-            sprintf(zipname, "%s.zip", file);
-
             n4 = fork();
 
             if(n4 == 0){
-                char *arg3[] = {"zip", "-r", zipname, file, NULL};
-                execv("/bin/zip", arg3);
+                char zipname[100];
+                sprintf(zipname, "%s.zip", dirfolder);
+                chdir("..");
+                char *arg3[] = {"zip", "-r", zipname, dirfolder, NULL};
+                execv("/usr/bin/zip", arg3);
+            }else{
+                while(wait(&status) > 0);
+                
+                char *arg4[] = {"rm", "-r", folder, NULL};
+                execv("/bin/rm", arg4);
             }
-            while(wait(&status) > 0);
             
-            char *arg4[] = {"/bin/rm", "rm", "-r", file, NULL};
-            execv("/bin/rm", arg4);
         }
-
         sleep(30);
+        
     }
+
 }
