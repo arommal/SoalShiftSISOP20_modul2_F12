@@ -86,8 +86,7 @@ int main(char *argv[]){
                 if(n3 < 0){
                     exit(1);
                 }else if(n3 == 0){
-                    execl("usr/bin/wget", "wget", dl, (char*)0);
-                    exit(EXIT_SUCCESS);
+                    execl("usr/bin/wget", "wget", "-O", file, dl, NULL);
                 }else{
                     wait(NULL);
                 }
@@ -95,20 +94,20 @@ int main(char *argv[]){
             }
             while(wait(&status) > 0);
 
-            // chdir("..");
-            // char zipname[100];
-            // sprintf(zipname, "%s.zip", file);
+            chdir("..");
+            char zipname[100];
+            sprintf(zipname, "%s.zip", folder);
 
-            // n4 = fork();
+            n4 = fork();
 
-            // if(n4 == 0){
-            //     char *arg3[] = {"zip", "-r", zipname, folder, NULL};
-            //     execv("/bin/zip", arg3);
-            // }
-            // while(wait(&status) > 0);
+            if(n4 == 0){
+                char *arg3[] = {"zip", "-r", zipname, folder, NULL};
+                execv("/bin/zip", arg3);
+            }
+            while(wait(&status) > 0);
             
-            // char *arg4[] = {"rm", "-r", folder, NULL};
-            // execv("/bin/rm", arg4);
+            char *arg4[] = {"rm", "-r", folder, NULL};
+            execv("/bin/rm", arg4);
         }
         sleep(30);
     }
