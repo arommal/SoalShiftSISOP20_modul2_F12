@@ -10,7 +10,7 @@
 #include <time.h>
 #include <wait.h>
 
-int main(char *argv[]){
+int main(char *argv){
     pid_t pid, sid;
 
     pid = fork();
@@ -35,16 +35,6 @@ int main(char *argv[]){
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
-    int mode;
-
-    if(argv[1][1] == 'a'){
-        mode = 1;
-    }else if(argv[1][1] == 'b'){
-        mode = 2;
-    }else{
-        mode = 0;
-    }
-
     while(1){
         char folder[25], dirfolder[30];
         pid_t n1, n2, n3, n4;
@@ -63,32 +53,25 @@ int main(char *argv[]){
             execv("/bin/mkdir", arg1);
         }
 
-        wait(&status);
+        while(wait(&status) > 0);
         
         n2 = fork();
 
         if(n2 == 0){
             int i = 0;
-
-            chdir(folder);
-
-            for(i;i<20;i++){
-                char dl[100], file[25];
-                time_t t2;
-                time(&t2);
-                struct tm *tm2 = localtime(&t2);
-
-                strftime(file, 25, "%Y-%m-%d_%X", tm2);
-                sprintf(dl, "https://picsum.photos/%ld", ((t2%1000)+100));
+            char dl[100], file[25];
+            for(;i<20;i++){
+                t = time(NULL);
+                tm = localtime(&t);
+                strftime(file, 25, "%Y-%m-%d_%X", tm);
+                sprintf(dl, "https://picsum.photos/%ld", ((t%1000)+100));
 
                 n3 = fork();
 
-                if(n3 < 0){
-                    exit(1);
-                }else if(n3 == 0){
-                    execl("usr/bin/wget", "wget", "-O", file, dl, NULL);
-                }else{
-                    wait(NULL);
+                if(n3 == 0){
+                    char *arg2[] = {"wget", "-P", dirfolder, dl, NULL};
+                    execv("/bin/wget", arg2);
+                    exit(EXIT_SUCCESS);
                 }
                 sleep(5);
             }
@@ -96,19 +79,20 @@ int main(char *argv[]){
 
             chdir("..");
             char zipname[100];
-            sprintf(zipname, "%s.zip", folder);
+            sprintf(zipname, "%s.zip", file);
 
             n4 = fork();
 
             if(n4 == 0){
-                char *arg3[] = {"zip", "-r", zipname, folder, NULL};
+                char *arg3[] = {"zip", "-r", zipname, file, NULL};
                 execv("/bin/zip", arg3);
             }
             while(wait(&status) > 0);
             
-            char *arg4[] = {"rm", "-r", folder, NULL};
+            char *arg4[] = {"/bin/rm", "rm", "-r", file, NULL};
             execv("/bin/rm", arg4);
         }
+
         sleep(30);
     }
 }
