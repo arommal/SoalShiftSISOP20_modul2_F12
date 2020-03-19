@@ -9,8 +9,30 @@
 #include <string.h>
 #include <time.h>
 #include <wait.h>
+#include <dirent.h>
 
-int main(char *argv){
+void generateKillerProgram(char mode[]){
+    FILE *program = fopen("killerprogram.sh", "w");
+    pid_t n1, n2;
+    int status;
+
+    if(strcmp(mode, "-a") == 0){
+        fprintf(program, "#!/bin/bash\nkillall -9 soal2\nrm \"$0\"");
+    }else if(strcmp(mode, "-b") == 0){
+        fprintf(program, "#!/bin/bash\nkill %d\nrm \"$0\"", getpid());
+    }
+
+    fclose(program);
+
+    n1 = fork();
+
+    if(n1 == 0){
+        char *arg1[] = {"chmod", "+x", "killerprogram.sh", NULL};
+        execv("/bin/chmod", arg1);
+    }
+}
+
+int main(int argc, char **argv){
     pid_t pid, sid;
 
     pid = fork();
@@ -30,12 +52,21 @@ int main(char *argv){
     if(sid < 0){
         exit(EXIT_FAILURE);
     }
-
+   
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
+    if(argc != 2){                                      // pre-req
+        exit(EXIT_FAILURE);
+    }
+
+    generateKillerProgram(argv[1]);
+
     while(1){
+
+        // generateKillerProgram(argv[1]);
+
         char folder[25], dirfolder[30];
         pid_t n1, n2, n3, n4;
         int status;
@@ -44,10 +75,13 @@ int main(char *argv){
         struct tm *tm = localtime(&t);
 
         strftime(folder, 25, "%Y-%m-%d_%X", tm);
-        sprintf(dirfolder, "./%s", folder);
 
         n1 = fork();
 
+        if(n1 < 0){
+            exit(EXIT_FAILURE);
+        }
+        
         if(n1 == 0){
             char *arg1[] = {"mkdir", "-p", folder, NULL};
             execv("/bin/mkdir", arg1);
@@ -60,7 +94,7 @@ int main(char *argv){
         if(n2 == 0){
             int i = 0;
             char dl[100], file[25];
-            for(;i<2;i++){
+            for(;i<20;i++){
                 time_t t2;
                 time(&t2);
                 struct tm *tm2 = localtime(&t2);
@@ -76,26 +110,13 @@ int main(char *argv){
                 }
                 sleep(5);
             }
-            while(wait(&status) > 0);
-
-            n4 = fork();
-
-            if(n4 == 0){
-                char zipname[100];
-                sprintf(zipname, "%s.zip", dirfolder);
-                chdir("..");
-                char *arg3[] = {"zip", "-r", zipname, dirfolder, NULL};
-                execv("/usr/bin/zip", arg3);
-            }else{
-                while(wait(&status) > 0);
-                
-                char *arg4[] = {"rm", "-r", folder, NULL};
-                execv("/bin/rm", arg4);
-            }
             
+            char zipname[100];
+            sprintf(zipname, "%s.zip", folder);
+            char *arg3[] = {"zip", "-rm", zipname, folder, NULL};
+            execv("/usr/bin/zip", arg3);
+  
         }
         sleep(30);
-        
     }
-
 }
