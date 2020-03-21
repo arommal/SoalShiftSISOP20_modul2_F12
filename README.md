@@ -39,3 +39,73 @@ Kemudian kita lakukan pengecekan untuk jam, menit, dan detik. Ketika waktu yang 
         }
 ```
 Perlu diingat bahwa * adalah any value, sehingga pengecekkan karakter bintang juga dilakukan, Kemudian kita melakukan sleep selama 1 sekon dan program selseai.
+
+
+3. Pada soal ini, kita akan membutuhkan banyak child process, pertama kita melakukan fork dengan ``pid = fork();`` dan kemudian kita menjalankan 
+```
+    if (pid == 0) { 
+        // First 
+        // printf("1\n");
+        char *argv[] = {"mkdir", "indomie", "sedaap", NULL};  
+        execv("/bin/mkdir", argv);
+    } 
+```
+yaitu melakukan pembuatan directory indomie dan sedaap kemudian kita melakukan wait dan melakukan fork lagi.
+```
+    else { 
+        while ((wait(&status))>0);
+        pid1 = fork(); 
+        if (pid1 == 0) { 
+            // // second
+            // printf("2\n");
+            char *argv[] = {"unzip", "jpg.zip", NULL}; 
+            execv("/usr/bin/unzip", argv);
+        } 
+```
+ didalam child process ini, kita melakukan unzip pada `jpg.zip` yang terletak pada directory yang sama, dan melakukan execv. Kemudian kita melakukan wait dan fork lagi.
+ ```
+         else { 
+            while ((wait(&status))>0);
+            pid2 = fork(); 
+            if (pid2 == 0) { 
+                // third
+                // printf("3\n");
+
+                char *argv[] = {"find", "/home/insanity/Modul2/jpg/.","-type","d", "-exec", "mv", "{}", "/home/insanity/Modul2/indomie",";" ,NULL};
+                execv("/usr/bin/find", argv);
+            } 
+```
+didalam child process ini, kita menggunakan find dengan ``-type d`` yaitu untuk menemukan semua file dengan tipe folder, dan melakukan ``-exec mv`` untuk menggunakan perintah move yaitu memindahkan semua file yang telah di find sebelumnya kedalam folder indomie yang telah dibuat sebelumnya. Kemudian kita melakukan wait dan fork lagi.
+```
+            else { 
+              while ((wait(&status))>0);
+              pid3 = fork();
+              if (pid3 == 0){
+                // printf("4\n");
+                char *argv[] = {"find","/home/insanity/Modul2/jpg/.", "-type", "f","-exec","mv","{}","/home/insanity/Modul2/sedaap",";", NULL}; 
+                execv("/usr/bin/find", argv);
+              }
+```
+Sama halnya dengan child sebelumnya, pada child process kali ini, kita melakukan find kembali, namun dengan tipe yang berbeda, yaitu f, yang berarti file, kemudian melakukan ``-exec mv`` ntuk menggunakan perintah move yaitu memindahkan semua file yang telah di find sebelumnya kedalam folder sedaap yang telah dibuat sebelumnya. Kemudian kita melakukan wait dan fork lagi.
+```
+              else{
+                    while ((wait(&status))>0);
+                    pid4 = fork();
+                    if (pid4 == 0){
+                        //fifth
+                        // printf("5\n");
+                        char *argv[] = {"find", "/home/insanity/Modul2/indomie/.","-mindepth","1","-maxdepth","1","-type","d", "-exec", "touch", "{}/coba1.txt ",";", NULL}; 
+                        execv("/usr/bin/find", argv);
+                    }
+```
+pada child process kali ini, kita melakukan find lagi, namun kita menggunakan ``-mindpeth 1 -maxdepth 1 -type d`` yaitu kita hanya ingin kedalamannya 1, dan file yang kita find haruslah folder, kemudian kita menggunakan ``-exec touch {}/coba1.txt ;`` untuk membuat file ``coba1.txt`` untuk setiap folder yang telah kita find kemudian kita melakukan wait.
+```
+                    else{
+                        while ((wait(&status))>0);
+                        sleep(3);
+                        // printf("6\n");
+                        char *argv[] = {"find", "/home/insanity/Modul2/indomie/.","-mindepth","1","-maxdepth","1","-type","d", "-exec", "touch", "{}/coba2.txt ",";", NULL}; 
+                        execv("/usr/bin/find", argv);
+                    }
+```
+pada Parent process ini, kita melakukan sleep terlebih dahulu selama 3 detik sebagaimana permintaan soal, kemudian kita melakukan hal yang sama pada childprocess diatas, yaitu membuat file coba2.txt untuk setiap folder.
